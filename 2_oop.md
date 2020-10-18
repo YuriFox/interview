@@ -183,12 +183,12 @@ print(count) // 1
 Свойства структуры постоянные и эти свойства нельзя изменить, независимо от того, как они были созданы. По умолчанию свойства типа значения не могут быть изменены из методов его экземпляра. Если вы хотите изменить свойство внутри метода, вам нужно пометить его с помощью ключевого слова mutating, например:
 ```swift
 struct User {
-    let name: String
-    private(set) var apples: Int
+  let name: String
+  private(set) var apples: Int
         
-    mutating func receiveApples(_ apples: Int) {
-        self.apples += apples
-    }
+  mutating func receiveApples(_ apples: Int) {
+    self.apples += apples
+  }
 }
 
 var ivan = User(name: "Иван", apples: 20)
@@ -205,6 +205,44 @@ print(ivan.apples) // 30
 - Когда фреймворк требует наследования. Таких ситуаций очень много, например: самая простая это объект CoreData (NSManagedObject) или Realm (Object), мы не можем использовать структуру, так как обязаны наследовать эти классы. Другой пример - это `UIView` и аналогичная ситуация.
 
 Во всех остальных случаях лучше использовать структуру.
+
+### В чем разница между глобальными, статическими (`static`) функциями и функциями класса (`class`) в Swift?
+1. Глобальные функции - отдельная функция, которая не входит в класс, и можно получить к ней доступ в любом месте проекта. Глобальные функции могут храниться в отдельном файле, который мы можем импортировать в любой проект в соответствии с требованиями.
+```swift
+func helloWorld() {
+  print("Hello world!")
+}
+helloWorld() // Hello world!
+```
+2. Статические функции - вызываются типом, а не экземпляром. Это упрощает вызов служебных функций без необходимости использовать экземпляр. Статические функции используются для структур, перечислений и классов.
+```swift
+class Hello {
+  static func world() {
+    print("Hello world!")
+  }
+  static func ivan() {
+    print("Hello Ivan!")
+  }
+}
+Hello.world() // Hello world!
+Hello.ivan() // Hello Ivan!
+```
+3. Функции класса используются только для классов и могут быть переопределены подклассами.
+```swift
+class Hello {
+  class func name() {
+    print("Hello anonymous!")
+  }
+}
+Hello.name() // Hello anonymous!
+
+class HelloIvan: Hello {
+  override class func name() {
+    print("Hello Ivan!")
+  }
+}
+HelloIvan.name() // Hello Ivan!
+```
 
 ## Назовите типа структуры данных для распределения памяти. Какая между ними разница?
 Существует два типа:
