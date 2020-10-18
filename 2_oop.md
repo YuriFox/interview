@@ -42,42 +42,40 @@ open class NSNumber : NSValue {
 2. Полиморфизм во время выполнения - это переопределение метода (method overriding). Swift вызывает фактический метод во время выполнения программы, но он не будет знать, какой метод вызывать во время компиляции. Это концепция, при которой, хотя имя метода и переданные параметры аналогичны, поведение различается в зависимости от типа объекта. Например создадим несколько классов, которые наследуют друг друга и переопределим метод `description()`. Когда мы вызовим этот метод для каждого экземпляра класса мы получим разные результаты:
 ```swift
 class Person {
-    let name: String
+  let name: String
              
-    init(name: String) {
-        self.name = name
-    }
+  init(name: String) {
+    self.name = name
+  }
     
-    func description() {
-        print("Имя: \(self.name)")
-    }
+  func description() {
+    print("Имя: \(self.name)")
+  }
 }
          
 class Employee: Person {
-    var company: String
+  var company: String
     
-    init(name: String, company: String) {
-        self.company = company
-        super.init(name:name)
-    }
+  init(name: String, company: String) {
+    self.company = company
+    super.init(name:name)
+  }
     
-    override func description() {
-        print("Имя: \(self.name), Сотрудник компании: \(self.company)")
-    }
+  override func description() {
+    print("Имя: \(self.name), Сотрудник компании: \(self.company)")
+  }
 }
          
 class Developer: Employee {
-    
-    override func description() {
-        print("Имя: \(self.name), Разработчик компании: \(self.company)")
-    }
-    
+  override func description() {
+    print("Имя: \(self.name), Разработчик компании: \(self.company)")
+  }
 }
 
 let persons: [Person] = [
-    Person(name:"Тарас"),
-    Employee(name: "Андрей", company: "Microsoft"),
-    Developer(name: "Юрий", company: "Apple")
+  Person(name:"Тарас"),
+  Employee(name: "Андрей", company: "Microsoft"),
+  Developer(name: "Юрий", company: "Apple")
 ]
 
 persons.forEach { $0.description() }
@@ -116,7 +114,7 @@ required init?(coder: NSCoder)
 Рассмотрим пример типа значаний на основе структуры `User`
 ```swift
 struct User {
-    var name: String
+  var name: String
 }
 var user_0 = User(name: "Ivan")
 var user_1 = user_0
@@ -127,11 +125,11 @@ print(user_1.name) // Taras
 Рассмотрим тот же самый пример, только ссылочного типа на основе класса `User`
 ```swift
 class User {
-    var name: String
+  var name: String
     
-    init(name: String) {
-        self.name = name
-    }
+  init(name: String) {
+    self.name = name
+  }
 }
 
 var user_0 = User(name: "Ivan")
@@ -164,11 +162,11 @@ print(user_1.name) // Taras
 var count: Int = 0
 
 func increase(count: inout Int) {
-    count += 1
+  count += 1
 }
 
 func decrease(count: inout Int) {
-    count -= 1
+  count -= 1
 }
 
 increase(count: &count)
