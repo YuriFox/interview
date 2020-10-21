@@ -12,19 +12,19 @@
 let serialQueue = DispatchQueue(label: "serial")
 
 serialQueue.async {
-    print("Задача 1")
-    for number in (0...5) {
-        print("Задача 1 - \(number)")
-    }
-    print("Задача 1 - выполнена")
+  print("Задача 1")
+  for number in (0...5) {
+    print("Задача 1 - \(number)")
+  }
+  print("Задача 1 - выполнена")
 }
 
 serialQueue.async {
-    print("Задача 2")
-    for number in (0...2) {
-        print("Задача 2 - \(number)")
-    }
-    print("Задача 2 - выполнена")
+  print("Задача 2")
+  for number in (0...2) {
+    print("Задача 2 - \(number)")
+  }
+  print("Задача 2 - выполнена")
 }
 
 // Задача 1
@@ -48,19 +48,19 @@ serialQueue.async {
 let concurentQueue = DispatchQueue(label: "concurent", attributes: .concurrent)
 
 concurentQueue.async {
-    print("Задача 1")
-    for number in (0...5) {
-        print("Задача 1 - \(number)")
-    }
-    print("Задача 1 - выполнена")
+  print("Задача 1")
+  for number in (0...5) {
+    print("Задача 1 - \(number)")
+  }
+  print("Задача 1 - выполнена")
 }
 
 concurentQueue.async {
-    print("Задача 2")
-    for number in (0...2) {
-        print("Задача 2 - \(number)")
-    }
-    print("Задача 2 - выполнена")
+  print("Задача 2")
+  for number in (0...2) {
+    print("Задача 2 - \(number)")
+  }
+  print("Задача 2 - выполнена")
 }
 
 // Задача 1
@@ -82,13 +82,13 @@ concurentQueue.async {
 let concurrentQueue = DispatchQueue(label: "concurrent.queue", attributes: .concurrent)
 
 concurrentQueue.async {
-    // Выполните запрос для получения данных и декодируем JSON в фоновой очереди.
-    fetchSomeNetworkAndDecodeData()
-    // Переводим задачу в основной поток
-    DispatchQueue.main.async {
-        /// Обновляем пользовательский интерфейс в основной очереди.
-        tableView.reloadData()
-    }
+  // Выполните запрос для получения данных и декодируем JSON в фоновой очереди.
+  fetchSomeNetworkAndDecodeData()
+  // Переводим задачу в основной поток
+  DispatchQueue.main.async {
+    /// Обновляем пользовательский интерфейс в основной очереди.
+    tableView.reloadData()
+  }
 }
 ```
 
@@ -98,22 +98,20 @@ concurrentQueue.async {
 Следующий код демонстрирует класс мессенджера, к которому можно получить доступ из нескольких потоков одновременно. Добавление новых сообщений в массив выполняется с помощью флага барьера, который блокирует новые чтения до завершения записи.
 ```swift
 final class Messenger {
+  private var messages: [String] = []
+  private var queue = DispatchQueue(label: "messages.queue", attributes: .concurrent)
 
-    private var messages: [String] = []
-
-    private var queue = DispatchQueue(label: "messages.queue", attributes: .concurrent)
-
-    var lastMessage: String? {
-        return queue.sync {
-            messages.last
-        }
+  var lastMessage: String? {
+    return queue.sync {
+      messages.last
     }
+  }
 
-    func postMessage(_ newMessage: String) {
-        queue.sync(flags: .barrier) {
-            self.messages.append(newMessage)
-        }
+  func postMessage(_ newMessage: String) {
+    queue.sync(flags: .barrier) {
+      self.messages.append(newMessage)
     }
+  }
 }
 ```
 
@@ -121,6 +119,80 @@ final class Messenger {
 При синхронном выполнении, функция выполняется и ожидает завершения задачи. Таким образом она блокирует текущий поток пока задача не будет завершена.
 
 При асинхронном выполнении, функция немедленно возвращается, приказывая выполнить задачу, но не дожидаясь ее. Таким образом, асинхронная функция не блокирует текущий поток выполнения от перехода к следующей функции.
+
+### Как узнать, что несколько параллельных потоков выполнили свою задачу?
+1. Использовать `OperationQueue` для создание очереди, где каждая задача может быть зависима от другой:
+```swift
+let operationQueue = OperationQueue()
+
+let blockOperation_1 = BlockOperation {
+  print("Block: 1")
+}
+
+let blockOperation_2 = BlockOperation {
+  print("Block: 2")
+}
+blockOperation_2.addDependency(blockOperation_1)
+
+operationQueue.addOperations([blockOperation_1, blockOperation_2], waitUntilFinished: false)
+
+blockOperation_2.completionBlock = {
+  print("Completed")
+}
+```
+2. Использовать `DispatchGroup` для создание счетчика асинхронных операций, где `enter()` увеличивает счетчик на 1, а `leave()` уменьшает его. Как только счетчик уменьшится до 0, выполнится блок уведомления `notify()`.
+```swift
+let dispatchGroup = DispatchGroup()
+
+dispatchGroup.enter()
+DispatchQueue.global().async {
+  print("Block: 1")
+  dispatchGroup.leave()
+}
+
+dispatchGroup.enter()
+DispatchQueue.global().async {
+  print("Block: 2")
+  dispatchGroup.leave()
+}
+
+
+dispatchGroup.notify(queue: .main) {
+  print("Completed")
+}
+```
+
+### Что такое DispatchSemaphore? Зачем его использовать
+Семафор позволяет выполнять какой-либо участок кода одновременно только конкретному количеству потоков. В основе семафора лежит счетчик, который и определяет, можно ли выполнять участок кода текущему потоку или нет. Если счетчик больше нуля — поток выполняет код, в противном случае — нет.
+```swift
+let dispatchGroup = DispatchGroup()
+let dispatchSemaphore = DispatchSemaphore(value: 0)
+
+dispatchGroup.enter()
+DispatchQueue.global().async {
+  print("Block 1 - wait")
+  print("Block 1 - start")
+  sleep(1)
+  print("Block 1 - finished")
+  dispatchSemaphore.signal()
+  dispatchGroup.leave()
+}
+
+dispatchGroup.enter()
+DispatchQueue.global().async {
+  print("Block 2 - wait")
+  dispatchSemaphore.wait()
+  print("Block 2 - start")
+  sleep(2)
+  print("Block 2 - finished")
+  dispatchSemaphore.signal()
+  dispatchGroup.leave()
+}
+
+dispatchGroup.notify(queue: .main) {
+  print("Completed")
+}
+```
 
 ### Что такое @synchronized?
 Он гарантирует, что только один поток может выполнять код в блоке в любой момент времени. В Swift используется `DispatchQueue.sync`
@@ -131,10 +203,10 @@ final class Messenger {
 let serialQueue = DispatchQueue(label: "concurrent.queue")
 
 serialQueue.sync {
+  // ...
+  serialQueue.sync { // <- Deadlock
     // ...
-    serialQueue.sync { // <- Deadlock
-        // ...
-    }
+  }
 }
 ```
 
